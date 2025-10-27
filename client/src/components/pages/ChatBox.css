@@ -1,0 +1,11 @@
+.messages-container {
+  max-width: 614px;
+  width: 100%;
+  margin: 0 auto;
+  border: 1px solid #dbdbdb;
+  border-radius: 8px;
+  background: #fff;
+  min-height: 100vh; /* 🟢 Full screen height */
+  display: flex;
+  flex-direction: column; /* useful if you’ll add a header/search/list layout */
+}

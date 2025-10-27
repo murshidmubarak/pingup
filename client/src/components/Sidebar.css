@@ -1,0 +1,150 @@
+/* ---------- MenuItems ---------- */
+.menu-items {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 0.25rem 0;
+}
+
+.menu-link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.875rem;
+  border-radius: 0.75rem;
+  color: #374151;
+  text-decoration: none;
+  transition: background-color 0.2s ease;
+}
+
+.menu-link:hover {
+  background-color: #f9fafb;
+}
+
+.menu-link.active {
+  background-color: #eef2ff;
+  color: #4338ca;
+}
+
+.menu-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.menu-label {
+  font-size: 0.95rem;
+}
+
+/* ---------- Desktop Sidebar ---------- */
+.sidebar.desktop-sidebar {
+  width: 15rem;
+  background-color: white;
+  border-right: 1px solid #e5e7eb;
+  display: flex;
+  flex-direction: column;
+  padding: 1rem;
+  height: 100vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+}
+
+.sidebar-logo {
+  width: 3rem;
+  height: 3rem;
+  margin-bottom: 1rem;
+  cursor: pointer;
+}
+
+.sidebar-divider {
+  border-color: #d1d5db;
+  margin-bottom: 2rem;
+}
+
+.menu-items.desktop-menu-items {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* Desktop Create Post Button */
+.create-post-button.desktop-create-post {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1rem;
+  margin-top: 1rem;
+  border-radius: 0.5rem;
+  background: linear-gradient(to right, #6366f1, #8b5cf6);
+  color: white;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.2s ease-in-out;
+}
+
+.create-post-button.desktop-create-post:hover {
+  background: linear-gradient(to right, #4f46e5, #7c3aed);
+}
+
+.create-post-button.desktop-create-post:active {
+  transform: scale(0.95);
+}
+
+/* ---------- Mobile Bottom Bar ---------- */
+.sidebar.mobile-bottom-bar {
+  display: none;
+}
+
+.menu-items.mobile-menu-items {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+  width: 100%;
+  align-items: center;
+  position: relative;
+}
+
+.menu-link.mobile-menu-link {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #6b7280;
+}
+
+.menu-link.mobile-menu-link.active {
+  color: #2563eb;
+}
+
+
+
+/* ---------- Responsive ---------- */
+@media (min-width: 640px) {
+  .sidebar.mobile-bottom-bar {
+    display: none;
+  }
+}
+
+@media (max-width: 639px) {
+  .sidebar.desktop-sidebar {
+    display: none;
+  }
+  .sidebar.mobile-bottom-bar {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 4rem;
+    background-color: white;
+    border-top: 1px solid #e5e7eb;
+    z-index: 20;
+  }
+
+  .menu-items {
+    gap: 0;
+  }
+
+  .menu-link {
+    padding: 0;
+  }
+}
