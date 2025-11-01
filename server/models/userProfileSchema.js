@@ -34,7 +34,7 @@ full_name:{
 },
 username:{
     type:String,
-    required:true,
+    sparse: true,
     unique:true
 },
 bio:{

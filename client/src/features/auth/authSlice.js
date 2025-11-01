@@ -77,7 +77,12 @@ export const checkAuthStatus = createAsyncThunk(
         throw new Error('No token found');
       }
       
-      const response = await api.get('/auth/me');
+ // ✅ Token send cheyyuka
+      const response = await api.get('/me', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Authentication failed');
@@ -88,11 +93,29 @@ export const checkAuthStatus = createAsyncThunk(
 
 
 // Async thunk for completing profile
+// export const completeUserProfile = createAsyncThunk(
+//   'auth/completeProfile',
+//   async (profileData, { rejectWithValue }) => {
+//     try {
+//       const response = await api.post('/complete-profile', profileData);
+//       return response.data;
+//     } catch (error) {
+//       return rejectWithValue(error.response?.data?.message || 'Profile completion failed');
+//     }
+//   }
+// );
 export const completeUserProfile = createAsyncThunk(
   'auth/completeProfile',
   async (profileData, { rejectWithValue }) => {
     try {
-      const response = await api.post('/complete-profile', profileData);
+      const token = localStorage.getItem('token'); // 👈 get token from storage
+
+      const response = await api.post('/complete-profile', profileData, {
+        headers: {
+          Authorization: `Bearer ${token}`, // 👈 send token to backend
+        },
+      });
+
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Profile completion failed');

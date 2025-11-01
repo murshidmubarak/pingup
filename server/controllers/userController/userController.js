@@ -1,11 +1,13 @@
 import Users from "../../models/userProfileSchema.js";
 import jwt from "jsonwebtoken";
+import imagekit from "../../configs/imageKit.js";
 
 // Secret key for JWT (store this in .env file in real apps)
 const JWT_SECRET = process.env.JWT_SECRET || "your_secret_key";
 
+
 const signup = async (req, res) => {
-  const { username, email, password } = req.body;
+  const { full_name, email, password } = req.body;
 
   try {
     // Check if user already exists
@@ -15,19 +17,18 @@ const signup = async (req, res) => {
     }
 
     // Create new user
-    const newUser = new Users({ username, email, password });
+    const newUser = new Users({
+      full_name,
+      email,
+      password,
+    });
     await newUser.save();
 
     // Create JWT token
     const token = jwt.sign(
-      { 
-         id: newUser._id,
-         email: newUser.email 
-      }, 
+      { id: newUser._id, email: newUser.email },
       JWT_SECRET,
-      { 
-        expiresIn: "7d" 
-      } // token expiry
+      { expiresIn: "7d" }
     );
 
     // Return user info + token
@@ -35,20 +36,66 @@ const signup = async (req, res) => {
       message: "User registered successfully!",
       user: {
         id: newUser._id,
-        username: newUser.username,
+        full_name: newUser.full_name,
         email: newUser.email,
       },
       token,
     });
-
   } catch (error) {
-
     console.error(error);
     res.status(500).json({ message: "Internal server error" });
-
   }
-
 };
+
+// const signup = async (req, res) => {
+//   const { username, email, password } = req.body;
+
+//   try {
+//     // Check if user already exists
+//     const existingUser = await Users.findOne({ email });
+//     if (existingUser) {
+//       return res.status(400).json({ message: "User already exists!" });
+//     }
+
+//     // Create new user
+//     const newUser = new Users({ 
+//        username,
+//        email,
+//         password 
+//       });
+//     await newUser.save();
+
+//     // Create JWT token
+//     const token = jwt.sign(
+//       { 
+//          id: newUser._id,
+//          email: newUser.email 
+//       }, 
+//       JWT_SECRET,
+//       { 
+//         expiresIn: "7d" 
+//       } // token expiry
+//     );
+
+//     // Return user info + token
+//     res.status(201).json({
+//       message: "User registered successfully!",
+//       user: {
+//         id: newUser._id,
+//         username: newUser.username,
+//         email: newUser.email,
+//       },
+//       token,
+//     });
+
+//   } catch (error) {
+
+//     console.error(error);
+//     res.status(500).json({ message: "Internal server error" });
+
+//   }
+
+// };
 
 const getCurrentUser = async (req, res) => {
   try {
@@ -74,8 +121,112 @@ const getCurrentUser = async (req, res) => {
   }
 };
 
+const completeProfile = async (req, res) => {
+  const { username, bio } = req.body;
 
-export default{ 
+  try {
+    const user = await Users.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+
+    user.username = username;
+    user.bio = bio;
+    user.isProfileComplete = true;
+    await user.save();
+
+    res.json({
+      message: "Profile updated successfully!",
+      user: {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        bio: user.bio,
+        profile_picture: user.profile_picture,
+        isProfileComplete: user.isProfileComplete,
+        full_name: user.full_name
+      }
+    });
+  } catch (error) {
+    console.error("Complete profile error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+const getUser = async (req, res) => {
+      console.log('Get user request:', req.user); // Debug log
+
+  try {
+    const user = await Users.findById(req.user.id).select('-password');
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json({
+      user: {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        bio: user.bio,
+        profile_picture: user.profile_picture,
+        isProfileComplete: user.isProfileComplete,
+        full_name: user.full_name
+      }
+    });
+  } catch (error) {
+    console.error("Get user error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+
+const updateUser = async (req, res) => {
+  const { username, bio, full_name, profile_picture } = req.body;
+
+  try {
+    const user = await Users.findById(req.user.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    // ✅ Update basic fields
+    user.username = username || user.username;
+    user.bio = bio || user.bio;
+    user.full_name = full_name || user.full_name;
+
+    // ✅ If profile_picture (base64) exists, upload to ImageKit
+    if (profile_picture) {
+      console.log("📸 Uploading new profile picture to ImageKit...");
+
+      const uploadResponse = await imagekit.files.upload({
+        file: profile_picture, // base64 string (e.g. data:image/jpeg;base64,...)
+        fileName: `profile_${req.user.id}.jpg`,
+        folder: "/user_profiles",
+      });
+
+      console.log("✅ Profile picture uploaded:", uploadResponse.url);
+      user.profile_picture = uploadResponse.url;
+    }
+
+    await user.save();
+    console.log("✅ User profile updated:", user);
+
+    res.json({
+      success: true,
+      message: "Profile updated successfully",
+      user,
+    });
+  } catch (error) {
+    console.error("❌ Update user error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+
+
+export default {
   signup,
-  getCurrentUser
+  getCurrentUser,
+  completeProfile,
+  getUser,
+  updateUser
 };
