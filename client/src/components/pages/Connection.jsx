@@ -119,17 +119,18 @@ export default function SimplePostCreator() {
 
   return (
     <div>
-      {!isOpen ? (
-        <div className="h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-pink-50">
-          <button
-            onClick={() => setIsOpen(true)}
-            className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl font-semibold"
-          >
-            <Upload className="inline mr-2" size={16} />
-            Create Post
-          </button>
-        </div>
-      ) : 
+      {
+      // !isOpen ? (
+      //   <div className="h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-pink-50">
+      //     <button
+      //       onClick={() => setIsOpen(true)}
+      //       className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl font-semibold"
+      //     >
+      //       <Upload className="inline mr-2" size={16} />
+      //       Create Post
+      //     </button>
+      //   </div>
+      // ) : 
       (
         <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-3">
           <div className="bg-white w-full max-w-5xl rounded-2xl flex flex-col md:flex-row h-[85vh] overflow-hidden">
