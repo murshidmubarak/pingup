@@ -9,8 +9,10 @@ const PostCard = ({ post }) => {
   const [likeCount, setLikeCount] = useState(post.likes_count || 0)
   const navigate = useNavigate()
 
-  const defaultProfilePic = 'https://via.placeholder.com/40/cccccc/ffffff?text=U'
-  const images = post.image_urls || []
+const defaultProfilePic =
+  `https://ui-avatars.com/api/?background=cccccc&color=ffffff&name=${post.user?.full_name?.[0] || 'U'}`;
+
+  const images = post.media || []
   const hasMultipleImages = images.length > 1
 
   const handlePrevImage = () => {
@@ -60,13 +62,30 @@ const PostCard = ({ post }) => {
       )}
 
       {/* Image Section */}
-      {images.length > 0 && (
+      {/* {images.length > 0 && (
         <div className="post-image-container">
           <img
             src={images[currentImageIndex]}
             alt={`Post ${currentImageIndex + 1}`}
             className="post-image"
-          />
+          /> */}
+
+          {images.length > 0 && (
+  <div className="post-image-container">
+    {images[currentImageIndex].type === "image" ? (
+      <img
+        src={images[currentImageIndex].url}
+        alt="Post"
+        className="post-image"
+      />
+    ) : (
+      <video
+        src={images[currentImageIndex].url}
+        controls
+        className="post-image"
+      />
+    )}
+
 
           {/* Navigation Buttons */}
           {hasMultipleImages && (

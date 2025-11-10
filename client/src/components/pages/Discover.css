@@ -1,0 +1,115 @@
+.discover-container {
+  max-width: 614px;
+  width: 100%;
+  margin: 0 auto;
+  border: 1px solid #dbdbdb;
+  border-radius: 8px;
+  background: #fff;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  
+}
+
+/* Header */
+.discover-header {
+  padding: 16px;
+  border-bottom: 1px solid #dbdbdb;
+  position: sticky;
+  top: 0;
+  background: #fff;
+}
+.discover-header h1 {
+  font-size: 18px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Search */
+.search-box {
+  position: relative;
+  margin-top: 10px;
+}
+.search-box .search-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #777;
+}
+.search-box input {
+  width: 100%;
+  padding: 8px 12px 8px 36px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: #f6f6f6;
+  outline: none;
+}
+
+/* User list */
+.users-list {
+  flex: 1;
+  overflow-y: auto;
+}
+.user-card {
+  padding: 14px;
+  border-bottom: 1px solid #efefef;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.user-card:hover {
+  background: #fafafa;
+}
+
+/* Avatar */
+.avatar {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #af76ff, #ff6bcc);
+  border-radius: 50%;
+  font-size: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Texts */
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.name {
+  font-weight: 600;
+}
+.username, .followers {
+  font-size: 13px;
+  color: #777;
+}
+
+/* Buttons */
+.follow-btn, .following-btn {
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  border: none;
+}
+.follow-btn {
+  background: #0095f6;
+  color: white;
+}
+.following-btn {
+  background: #e5e5e5;
+  color: #333;
+}
+
+/* No results */
+.no-users {
+  text-align: center;
+  padding: 40px;
+  color: #777;
+}

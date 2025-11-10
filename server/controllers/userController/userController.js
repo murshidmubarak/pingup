@@ -47,56 +47,6 @@ const signup = async (req, res) => {
   }
 };
 
-// const signup = async (req, res) => {
-//   const { username, email, password } = req.body;
-
-//   try {
-//     // Check if user already exists
-//     const existingUser = await Users.findOne({ email });
-//     if (existingUser) {
-//       return res.status(400).json({ message: "User already exists!" });
-//     }
-
-//     // Create new user
-//     const newUser = new Users({ 
-//        username,
-//        email,
-//         password 
-//       });
-//     await newUser.save();
-
-//     // Create JWT token
-//     const token = jwt.sign(
-//       { 
-//          id: newUser._id,
-//          email: newUser.email 
-//       }, 
-//       JWT_SECRET,
-//       { 
-//         expiresIn: "7d" 
-//       } // token expiry
-//     );
-
-//     // Return user info + token
-//     res.status(201).json({
-//       message: "User registered successfully!",
-//       user: {
-//         id: newUser._id,
-//         username: newUser.username,
-//         email: newUser.email,
-//       },
-//       token,
-//     });
-
-//   } catch (error) {
-
-//     console.error(error);
-//     res.status(500).json({ message: "Internal server error" });
-
-//   }
-
-// };
-
 const getCurrentUser = async (req, res) => {
   try {
     const user = await Users.findById(req.user.id).select('-password');
@@ -155,7 +105,6 @@ const completeProfile = async (req, res) => {
 };
 
 const getUser = async (req, res) => {
-      console.log('Get user request:', req.user); // Debug log
 
   try {
     const user = await Users.findById(req.user.id).select('-password');
@@ -195,7 +144,6 @@ const updateUser = async (req, res) => {
 
     // ✅ If profile_picture (base64) exists, upload to ImageKit
     if (profile_picture) {
-      console.log("📸 Uploading new profile picture to ImageKit...");
 
       const uploadResponse = await imagekit.files.upload({
         file: profile_picture, // base64 string (e.g. data:image/jpeg;base64,...)
@@ -203,12 +151,10 @@ const updateUser = async (req, res) => {
         folder: "/user_profiles",
       });
 
-      console.log("✅ Profile picture uploaded:", uploadResponse.url);
       user.profile_picture = uploadResponse.url;
     }
 
     await user.save();
-    console.log("✅ User profile updated:", user);
 
     res.json({
       success: true,
@@ -222,11 +168,40 @@ const updateUser = async (req, res) => {
 };
 
 
+const searchUsers = async (req, res) => {
+  try {
+    const query = req.query.q; // text user typed
+
+    if (!query) {
+      return res.status(200).json([]); // return empty array if no input
+    }
+
+    // case-insensitive search
+     const users = await Users.find({
+       $or: [
+      { username: { $regex: `^${query}`, $options: "i" } }, // starts with
+      { full_name: { $regex: query, $options: "i" } }        // contains
+      ]
+     })
+.select("username full_name profile_picture followers")
+.limit(10); // return only needed fields
+
+    res.status(200).json(users);
+
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+
+
 
 export default {
   signup,
   getCurrentUser,
   completeProfile,
   getUser,
-  updateUser
+  updateUser,
+  searchUsers
 };
