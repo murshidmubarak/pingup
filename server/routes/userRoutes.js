@@ -16,6 +16,8 @@ router.post("/complete-profile", protect, userController.completeProfile);
 router.get('/fetchUserData', protect, userController.getUser);
 router.post('/updateUser', protect, userController.updateUser);
 router.get('/search', protect, userController.searchUsers);
+router.get('/getUserById/:id', protect,userController. getUserById);
+
 
 
 

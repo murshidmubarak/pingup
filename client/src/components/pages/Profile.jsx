@@ -5,7 +5,7 @@ import { dummyConnectionsData, dummyPostsData } from '../../assets/assets';
 import { Settings, Grid, Bookmark, UserSquare2, MessageCircle } from 'lucide-react';
 import Loading from '../Loading';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchUser,updateUser } from '../../features/user/userSlice';
+import { fetchUser,updateUser,fetchUserById } from '../../features/user/userSlice';
 import ProfileAdd from '../ProfileAdd';
 import EditProfileModal from '../EditProfileModal';
 
@@ -14,19 +14,54 @@ const Profile = () => {
   const { profileId } = useParams();
   const navigate = useNavigate();
 
+  
+
   const [posts, setPosts] = useState([]);
   const [activeTab, setActiveTab] = useState('posts');
   const [showEditModal, setShowEditModal] = useState(false);
   const [isOwnProfile, setIsOwnProfile] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
-  const [showCropModal, setShowCropModal] = useState(false); // ✅ Crop modal state
+  const [showCropModal, setShowCropModal] = useState(false); 
 
   const currentUser = useSelector((state) => state.user.value);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
 
+  
+
   // ✅ Fetch or setup user profile
-  useEffect(() => {
+  // useEffect(() => {
+  //   const initializeProfile = async () => {
+  //     setLoading(true);
+  //     const token = localStorage.getItem('token');
+  //     if (token && !currentUser) {
+  //       const fetchedUser = await dispatch(fetchUser(token)).unwrap();
+  //       setupProfileData(fetchedUser);
+  //     } else if (currentUser) {
+  //       setupProfileData(currentUser);
+  //     }
+  //     setLoading(false);
+  //   };
+  //   initializeProfile();
+  // }, [dispatch, currentUser, profileId]);
+
+  // const setupProfileData = (userData) => {
+  //   if (!profileId || profileId === userData.id) {
+  //     setUser(userData);
+  //     setIsOwnProfile(true);
+  //   } else {
+  //     const foundUser = dummyConnectionsData.find((u) => u._id === profileId);
+  //     if (foundUser) {
+  //       setUser(foundUser);
+  //       setIsOwnProfile(false);
+  //       setIsFollowing(userData.following?.includes(profileId));
+  //     } else {
+  //       setUser(null);
+  //     }
+  //   }
+  // };
+
+    useEffect(() => {
     const initializeProfile = async () => {
       setLoading(true);
       const token = localStorage.getItem('token');
@@ -41,14 +76,15 @@ const Profile = () => {
     initializeProfile();
   }, [dispatch, currentUser, profileId]);
 
-  const setupProfileData = (userData) => {
+  const setupProfileData = async (userData) => {
     if (!profileId || profileId === userData.id) {
       setUser(userData);
       setIsOwnProfile(true);
     } else {
-      const foundUser = dummyConnectionsData.find((u) => u._id === profileId);
-      if (foundUser) {
-        setUser(foundUser);
+      const otherUser = await dispatch(fetchUserById(profileId)).unwrap();
+
+      if (otherUser) {
+        setUser(otherUser);
         setIsOwnProfile(false);
         setIsFollowing(userData.following?.includes(profileId));
       } else {
@@ -66,6 +102,11 @@ const Profile = () => {
   };
 
   if (!user) return <Loading />;
+
+  const defaultProfilePic = `https://ui-avatars.com/api/?background=cccccc&color=ffffff&name=${encodeURIComponent(
+  user?.full_name ? user.full_name[0].toUpperCase() : 'U'
+)}`;
+
 
   return (
     <div className="profile-container">
@@ -85,7 +126,7 @@ const Profile = () => {
           <div className="profile-picture-wrapper">
             <div className="profile-picture">
               <img
-                src={user.profile_picture || 'https://via.placeholder.com/150'}
+                src={user.profile_picture || defaultProfilePic}
                 alt={user.full_name}
               />
             </div>
@@ -135,7 +176,7 @@ const Profile = () => {
                     {isFollowing ? 'Following' : 'Follow'}
                   </button>
                   <button onClick={handleMessage} className="action-btn message-btn">
-                    <MessageCircle size={18} />
+                    {/* <MessageCircle size={18} /> */}
                     Message
                   </button>
                 </>
@@ -207,64 +248,7 @@ const Profile = () => {
         </div>
       </div>
 
-      {/* Edit Profile Modal */}
-      {/* {showEditModal && (
-        <div className="modal-overlay" onClick={() => setShowEditModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>Edit Profile</h2>
-              <button onClick={() => setShowEditModal(false)} className="modal-close">
-                ×
-              </button>
-            </div>
 
-            <div className="modal-body">
-              <div className="modal-avatar">
-                <div className="avatar-preview">
-                  <img
-                    src={user.profile_picture || 'https://via.placeholder.com/150'}
-                    alt={user.full_name}
-                  />
-                </div>
-                <button
-                  className="change-avatar-btn"
-                  onClick={() => setShowCropModal(true)} // ✅ opens crop modal
-                >
-                  Change Profile Photo
-                </button>
-              </div>
-
-              <div className="modal-form">
-                <div className="form-group">
-                  <label>Name</label>
-                  <input type="text" defaultValue={user.full_name} />
-                </div>
-                <div className="form-group">
-                  <label>Username</label>
-                  <input type="text" defaultValue={user.username} />
-                </div>
-                <div className="form-group">
-                  <label>Bio</label>
-                  <textarea defaultValue={user.bio} rows="3" />
-                </div>
-              </div>
-
-              <button onClick={() => setShowEditModal(false)} className="save-btn">
-                Save Changes
-              </button>
-            </div>
-          </div>
-        </div>
-      )} */}
-
-
-
-      {/* ✅ Crop Photo Modal (outside main modal) */}
-      {/* <ProfileAdd
-        isOpen={showCropModal}
-        onClose={() => setShowCropModal(false)}
-        onSave={(croppedImg) => setUser({ ...user, profile_picture: croppedImg })}
-      /> */}
 
       <ProfileAdd
       isOpen={showCropModal}

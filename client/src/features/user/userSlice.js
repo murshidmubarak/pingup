@@ -6,21 +6,36 @@ const initialState = {
   value: null,
 };
 
-// export const fetchUser = createAsyncThunk('user/fetchUser', async (token) => {
-//   const { data } = await api.get('/api/user/data', {
-//     headers: {
-//       Authorization: `Bearer ${token}`,
-//     },
-//   });
+export const fetchUserById = createAsyncThunk(
+  'user/fetchUserById',
+  async (userId, { rejectWithValue }) => {
+    try {
+      console.log('Fetching profile for userId:', userId);
 
-//   if (data.success) {
-//     toast.success(data.message);
-//     return data.user;
-//   } else {
-//     toast.error(data.message);
-//     return null;
-//   }
-// });
+      const token = localStorage.getItem('token');
+      if (!token) {
+        return rejectWithValue('No token found');
+      }
+
+      const { data } = await api.get(`/getUserById/${userId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      // ✅ Assuming your backend returns { success: true, user: {...} }
+      if (data && data.user) {
+        return data.user;
+      } else {
+        return rejectWithValue(data.message || 'User not found');
+      }
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || 'Failed to fetch user profile';
+      return rejectWithValue(errorMessage);
+    }
+  }
+);
+
 
 
 // userSlice.js

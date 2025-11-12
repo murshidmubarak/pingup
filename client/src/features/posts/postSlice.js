@@ -3,22 +3,38 @@ import api from "../../api/axios.js";
 
 
 //fetch feed posts
+// export const fetchFeedPosts = createAsyncThunk(
+//   "posts/fetchFeedPosts",
+//   async (_, { rejectWithValue }) => {
+//     const token = localStorage.getItem('token');
+//     try {
+//       const res = await api.get("/fetchFeed", {
+//         headers: {
+//           Authorization: `Bearer ${token}`
+//         }
+//       });
+//       return res.data;
+//     } catch (err) {
+//       return rejectWithValue(err.response?.data?.message || err.message);
+//     }
+//   }
+// );
+
 export const fetchFeedPosts = createAsyncThunk(
   "posts/fetchFeedPosts",
-  async (_, { rejectWithValue }) => {
-    const token = localStorage.getItem('token');
+  async (page = 1, { rejectWithValue }) => {
+    const token = localStorage.getItem("token");
     try {
-      const res = await api.get("/fetchFeed", {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
+      const res = await api.get(`/fetchFeed?page=${page}`, {
+        headers: { Authorization: `Bearer ${token}` }
       });
-      return res.data;
+      return { page, posts: res.data.posts, hasMore: res.data.hasMore };
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || err.message);
     }
   }
 );
+
 
 
 
@@ -68,26 +84,49 @@ export const addComment = createAsyncThunk(
 const postsSlice = createSlice({
   name: "posts",
   initialState: {
-    posts: [],
-    loading: false,
-    error: null,
+    // posts: [],
+    // loading: false,
+    // error: null,
+
+      posts: [],
+  loading: false,
+  hasMore: true,
+  error: null,
+
   },
   reducers: {},
   extraReducers: (builder) => {
     builder
       // Fetch
-      .addCase(fetchFeedPosts.pending, (state) => {
-        state.loading = true;
-      })
-      .addCase(fetchFeedPosts.fulfilled, (state, action) => {
-        state.loading = false;
-        state.posts = action.payload;
-      })
-      .addCase(fetchFeedPosts.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
-      })
+      // .addCase(fetchFeedPosts.pending, (state) => {
+      //   state.loading = true;
+      // })
+      // .addCase(fetchFeedPosts.fulfilled, (state, action) => {
+      //   state.loading = false;
+      //   state.posts = action.payload;
+      // })
+      // .addCase(fetchFeedPosts.rejected, (state, action) => {
+      //   state.loading = false;
+      //   state.error = action.payload;
+      // })
 
+      .addCase(fetchFeedPosts.pending, (state) => {
+  state.loading = true;
+})
+.addCase(fetchFeedPosts.fulfilled, (state, action) => {
+  state.loading = false;
+  state.hasMore = action.payload.hasMore;
+
+  if (action.payload.page === 1) {
+    state.posts = action.payload.posts;
+  } else {
+    state.posts = [...state.posts, ...action.payload.posts];
+  }
+})
+.addCase(fetchFeedPosts.rejected, (state, action) => {
+  state.loading = false;
+  state.error = action.payload;
+})
 
       // Fetch User Posts
       .addCase(fetchUserPosts.pending, (state) => {

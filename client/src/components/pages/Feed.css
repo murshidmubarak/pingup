@@ -1,0 +1,33 @@
+.loader-dots {
+  text-align: center;
+  padding: 18px 0;
+  font-size: 26px;
+  color: #888;
+}
+
+.loader-dots::after {
+  content: ".";
+  animation: dots 1s infinite;
+}
+
+@keyframes dots {
+  0% { content: "."; }
+  33% { content: ".."; }
+  66% { content: "..."; }
+  100% { content: "."; }
+}
+
+
+
+
+
+
+.feed-scroll-container {
+  height: 100vh;              /* scroll area height - 85% of viewport */
+  overflow-y: auto;          /* enable vertical scrolling */
+  background: #fafbfd;       /* light background */
+  padding: 0 16px;           /* inner spacing */
+  border: 1px solid #e2e2e2; /* optional: add subtle border if you want */
+  scroll-behavior: smooth;   /* makes scroll transitions feel smoother */
+}
+

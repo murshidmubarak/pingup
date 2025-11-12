@@ -2,6 +2,8 @@ import React, { useState,useEffect } from 'react';
 import { Search, UserPlus, Users } from 'lucide-react';
 import './Discover.css';
 import api from '../../api/axios';
+import { useNavigate } from 'react-router-dom'
+
 
 
 
@@ -9,9 +11,8 @@ const Discover = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [debouncedQuery, setDebouncedQuery] = useState('');
-    const [users, setUsers] = useState([]);
-
-
+  const [users, setUsers] = useState([]);
+  const navigate = useNavigate();
 
   // Debounce search input
   useEffect(() => {
@@ -82,7 +83,7 @@ useEffect(() => {
     </div>
   ) : (
     users.map((user) => (
-      <div key={user._id} className="user-card">
+      <div key={user._id} className="user-card" onClick={()=>navigate('/profile/' + user._id)}>
         <div className="user-info">
           <img src={user.profile_picture} className="avatar" alt="profile" />
 

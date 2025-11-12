@@ -128,20 +128,53 @@ const mergeChunks = async (req, res) => {
   }
 };
 
-const fetchFeedPosts = async (req, res) => {
-  console.log("Fetching feed posts...");
+// const fetchFeedPosts = async (req, res) => {
+//   console.log("Fetching feed posts...");
+//   try {
+//     const posts = await Post.find({ isDeleted: false })
+//       .populate("user", "full_name username profile_picture") // FIXED HERE
+//       .sort({ createdAt: -1 });
+
+//     res.status(200).json(posts);
+
+//   } catch (error) {
+//     console.log("Error fetching posts:", error);
+//     res.status(500).json({ message: "Server error fetching posts" });
+//   }
+// };
+
+
+// Example limit per load
+const LIMIT = 10;
+
+ const fetchFeedPosts = async (req, res) => {
+  console.log("Fetching feed posts with pagination...");
   try {
+    const page = parseInt(req.query.page) || 1;
+    const skip = (page - 1) * LIMIT;
+    console.log(`Fetching posts for page=${page}, skip=${skip}, limit=${LIMIT}`);
+
+
     const posts = await Post.find({ isDeleted: false })
-      .populate("user", "full_name username profile_picture") // FIXED HERE
-      .sort({ createdAt: -1 });
+      .populate("user", "full_name username profile_picture")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(LIMIT);
 
-    res.status(200).json(posts);
+    const totalCount = await Post.countDocuments({ isDeleted: false });
+    const hasMore = skip + posts.length < totalCount;
 
+    res.status(200).json({
+      posts,
+      hasMore
+    });
   } catch (error) {
-    console.log("Error fetching posts:", error);
-    res.status(500).json({ message: "Server error fetching posts" });
+    console.log("Error fetching feed posts:", error);
+    res.status(500).json({ message: "Server Error" });
   }
 };
+
+
 
 
 
