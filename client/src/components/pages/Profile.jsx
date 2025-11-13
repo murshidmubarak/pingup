@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import './Profile.css';
 import { useParams, useNavigate } from 'react-router-dom';
-import { dummyConnectionsData, dummyPostsData } from '../../assets/assets';
 import { Settings, Grid, Bookmark, UserSquare2, MessageCircle } from 'lucide-react';
 import Loading from '../Loading';
 import { useDispatch, useSelector } from 'react-redux';
@@ -29,37 +28,6 @@ const Profile = () => {
 
   
 
-  // ✅ Fetch or setup user profile
-  // useEffect(() => {
-  //   const initializeProfile = async () => {
-  //     setLoading(true);
-  //     const token = localStorage.getItem('token');
-  //     if (token && !currentUser) {
-  //       const fetchedUser = await dispatch(fetchUser(token)).unwrap();
-  //       setupProfileData(fetchedUser);
-  //     } else if (currentUser) {
-  //       setupProfileData(currentUser);
-  //     }
-  //     setLoading(false);
-  //   };
-  //   initializeProfile();
-  // }, [dispatch, currentUser, profileId]);
-
-  // const setupProfileData = (userData) => {
-  //   if (!profileId || profileId === userData.id) {
-  //     setUser(userData);
-  //     setIsOwnProfile(true);
-  //   } else {
-  //     const foundUser = dummyConnectionsData.find((u) => u._id === profileId);
-  //     if (foundUser) {
-  //       setUser(foundUser);
-  //       setIsOwnProfile(false);
-  //       setIsFollowing(userData.following?.includes(profileId));
-  //     } else {
-  //       setUser(null);
-  //     }
-  //   }
-  // };
 
     useEffect(() => {
     const initializeProfile = async () => {

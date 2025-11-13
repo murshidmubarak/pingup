@@ -55,9 +55,9 @@ const defaultProfilePic =
       </div>
 
       {/* Content */}
-      {post.content && (
+      {post.description && (
         <div className="post-content">
-          <p>{post.content}</p>
+          <p>{post.description}</p>
         </div>
       )}
 

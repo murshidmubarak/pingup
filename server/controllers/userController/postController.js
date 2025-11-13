@@ -24,21 +24,6 @@ const createPost = async (req, res) => {
 
     // Process files using multer and upload to ImageKit
     let media = [];
-    // if (req.files && req.files.length > 0) {
-    //   for (const file of req.files) {
-    //     const uploaded = await imagekit.upload({
-    //       file: file.buffer,
-    //       fileName: file.originalname,
-    //     });
-    //     const type = file.mimetype.startsWith("video/") ? "video": "image";
-         
-          
-    //     media.push({
-    //       url: uploaded.url,
-    //       type, // "image" or "video"
-    //     });
-    //   }
-    // }
 
     if (req.files && req.files.length > 0) {
   for (const file of req.files) {
@@ -61,7 +46,7 @@ const createPost = async (req, res) => {
     // Create and save post
     const newPost = new Post({
       user: userId,
-      description,
+      description: description,
       media,
     });
 
@@ -144,15 +129,13 @@ const mergeChunks = async (req, res) => {
 // };
 
 
-// Example limit per load
 const LIMIT = 10;
 
  const fetchFeedPosts = async (req, res) => {
-  console.log("Fetching feed posts with pagination...");
   try {
     const page = parseInt(req.query.page) || 1;
     const skip = (page - 1) * LIMIT;
-    console.log(`Fetching posts for page=${page}, skip=${skip}, limit=${LIMIT}`);
+    // console.log(`Fetching posts for page=${page}, skip=${skip}, limit=${LIMIT}`);
 
 
     const posts = await Post.find({ isDeleted: false })
@@ -180,4 +163,9 @@ const LIMIT = 10;
 
 
 
-export default{ createPost,uploadChunk,mergeChunks,fetchFeedPosts };
+export default{ 
+  createPost,
+  uploadChunk,
+  mergeChunks,
+  fetchFeedPosts 
+};
