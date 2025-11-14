@@ -82,6 +82,35 @@ export const updateUser = createAsyncThunk('user/updateUser', async ({ token, us
   }
 });
 
+
+
+export const followers = createAsyncThunk(
+  'user/followers',
+  async ({ token, userId }, { rejectWithValue }) => {
+    try {
+      const { data } = await api.post(`/follow/${userId}`, null, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (data.success) {
+        toast.success(data.message);
+        return data.user; // updated user 
+      } else {
+        toast.error(data.message);
+        return rejectWithValue(data.message);
+      }
+    } catch (error) {
+      const errorMessage =
+        error.response?.data?.message || 'Failed to follow/unfollow user';
+      toast.error(errorMessage);
+      return rejectWithValue(errorMessage);
+    }
+  }
+);
+
+
 const userSlice = createSlice({
   name: 'user',
   initialState,

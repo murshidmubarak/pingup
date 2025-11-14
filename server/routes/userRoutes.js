@@ -17,6 +17,8 @@ router.get('/fetchUserData', protect, userController.getUser);
 router.post('/updateUser', protect, userController.updateUser);
 router.get('/search', protect, userController.searchUsers);
 router.get('/getUserById/:id', protect,userController. getUserById);
+router.post('/follow/:id', protect, userController.followUser);
+
 
 
 
@@ -29,5 +31,6 @@ router.post('/upload-chunk', protect, uploadChunks.single("chunk"), postControll
 // ✅ Merge Chunks
 router.post('/merge-chunks', protect, postController.mergeChunks);
 router.get('/fetchFeed', protect, postController.fetchFeedPosts);
+router.put('/like/:postId', protect, postController.toggleLikeOnPost);
 
 export default router;

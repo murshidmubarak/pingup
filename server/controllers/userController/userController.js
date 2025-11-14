@@ -197,10 +197,15 @@ const searchUsers = async (req, res) => {
 const getUserById = async (req, res) => {
   try {
     const userId = req.params.id;
+    const currentUserId = req.user.id;
     const user = await Users.findById(userId).select('-password');
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
+        const isFollowed = await Users.exists({
+      _id: userId,
+      followers: currentUserId
+    });
     res.json({
       user: {
         id: user._id,
@@ -208,6 +213,10 @@ const getUserById = async (req, res) => {
         email: user.email,
         bio: user.bio,
         profile_picture: user.profile_picture,
+        followers: user.followers,
+        following: user.following,
+        full_name: user.full_name,
+        isFollowed: isFollowed || false
       }
     });
   } catch (error) {
@@ -216,6 +225,61 @@ const getUserById = async (req, res) => {
   }
 };
 
+const followUser = async (req, res) => {
+  try {
+    const userIdToFollow = req.params.id;
+    const currentUserId = req.user.id;
+
+    if (userIdToFollow === currentUserId) {
+      return res.status(400).json({ message: "You cannot follow yourself" });
+    }
+
+    // Check if user exists
+    const userExists = await Users.exists({ _id: userIdToFollow });
+    if (!userExists) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const isFollowing = await Users.exists({
+      _id: currentUserId,
+      following: userIdToFollow
+    });
+
+    if (isFollowing) {
+      //  Unfollow
+      await Users.updateOne(
+        { _id: currentUserId },
+        { $pull: { following: userIdToFollow } }
+      );
+
+      await Users.updateOne(
+        { _id: userIdToFollow },
+        { $pull: { followers: currentUserId } }
+      );
+
+      return res.json({ message: "User unfollowed successfully", following: false });
+    }
+
+    //  Follow
+    await Users.updateOne(
+      { _id: currentUserId },
+      { $addToSet: { following: userIdToFollow } }
+    );
+
+    await Users.updateOne(
+      { _id: userIdToFollow },
+      { $addToSet: { followers: currentUserId } }
+    );
+
+    res.json({ message: "User followed successfully", following: true });
+
+  } catch (error) {
+    console.error("Follow/unfollow error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+
 export default {
   signup,
   getCurrentUser,
@@ -223,5 +287,6 @@ export default {
   getUser,
   updateUser,
   searchUsers,
-  getUserById
+  getUserById,
+  followUser
 };

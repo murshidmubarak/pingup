@@ -4,7 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Settings, Grid, Bookmark, UserSquare2, MessageCircle } from 'lucide-react';
 import Loading from '../Loading';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchUser,updateUser,fetchUserById } from '../../features/user/userSlice';
+import { fetchUser,updateUser,fetchUserById,followers } from '../../features/user/userSlice';
 import ProfileAdd from '../ProfileAdd';
 import EditProfileModal from '../EditProfileModal';
 
@@ -19,12 +19,15 @@ const Profile = () => {
   const [activeTab, setActiveTab] = useState('posts');
   const [showEditModal, setShowEditModal] = useState(false);
   const [isOwnProfile, setIsOwnProfile] = useState(false);
-  const [isFollowing, setIsFollowing] = useState(false);
   const [showCropModal, setShowCropModal] = useState(false); 
 
   const currentUser = useSelector((state) => state.user.value);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
+
+    const [isFollowing, setIsFollowing] = useState(false);
+  const [followersCount, setFollowersCount] = useState(0);
+
 
   
 
@@ -54,7 +57,9 @@ const Profile = () => {
       if (otherUser) {
         setUser(otherUser);
         setIsOwnProfile(false);
-        setIsFollowing(userData.following?.includes(profileId));
+        setFollowersCount(otherUser.followers?.length || 0);
+        // setIsFollowing(userData.following?.includes(profileId));
+        setIsFollowing(otherUser.isFollowed || false);
       } else {
         setUser(null);
       }
@@ -63,6 +68,11 @@ const Profile = () => {
 
   const handleFollowToggle = () => {
     setIsFollowing(!isFollowing);
+    setFollowersCount(isFollowing ? followersCount - 1 : followersCount + 1);
+    dispatch(followers({ token: localStorage.getItem("token"), userId: profileId }));
+
+
+    // dispatch(followers(profileId));
   };
 
   const handleMessage = () => {
@@ -108,7 +118,7 @@ const Profile = () => {
                 <div className="stat-label">Posts</div>
               </div>
               <div className="stat-item clickable">
-                <div className="stat-number">{user.followers?.length || 0}</div>
+                <div className="stat-number">{followersCount || 0}</div>
                 <div className="stat-label">Followers</div>
               </div>
               <div className="stat-item clickable">

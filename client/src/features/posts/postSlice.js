@@ -2,23 +2,6 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import api from "../../api/axios.js";
 
 
-//fetch feed posts
-// export const fetchFeedPosts = createAsyncThunk(
-//   "posts/fetchFeedPosts",
-//   async (_, { rejectWithValue }) => {
-//     const token = localStorage.getItem('token');
-//     try {
-//       const res = await api.get("/fetchFeed", {
-//         headers: {
-//           Authorization: `Bearer ${token}`
-//         }
-//       });
-//       return res.data;
-//     } catch (err) {
-//       return rejectWithValue(err.response?.data?.message || err.message);
-//     }
-//   }
-// );
 
 export const fetchFeedPosts = createAsyncThunk(
   "posts/fetchFeedPosts",
@@ -57,14 +40,18 @@ export const fetchUserPosts = createAsyncThunk(
 export const toggleLike = createAsyncThunk(
   "posts/toggleLike",
   async (postId, { rejectWithValue }) => {
+    const token = localStorage.getItem("token");
     try {
-      const res = await api.put(`/posts/${postId}/like`);
+      const res = await api.put(`/like/${postId}`, {}, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       return res.data;
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || err.message);
     }
   }
 );
+
 
 // Add Comment
 export const addComment = createAsyncThunk(
@@ -144,12 +131,13 @@ const postsSlice = createSlice({
 
 
       // Like Toggle
-      .addCase(toggleLike.fulfilled, (state, action) => {
-        const updated = action.payload;
-        state.posts = state.posts.map((post) =>
-          post._id === updated._id ? updated : post
-        );
-      })
+.addCase(toggleLike.fulfilled, (state, action) => {
+  const { postId, likes_count } = action.payload;
+  state.posts = state.posts.map((post) =>
+    post._id === postId ? { ...post, likes_count } : post
+  );
+})
+
 
       
 

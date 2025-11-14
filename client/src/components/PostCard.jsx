@@ -2,13 +2,22 @@ import React, { useState } from 'react'
 import moment from 'moment'
 import './PostCard.css'
 import { useNavigate } from 'react-router-dom'
+import { useDispatch } from 'react-redux'
+import { toggleLike } from "../features/posts/postSlice";
+
 
 const PostCard = ({ post }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
-  const [isLiked, setIsLiked] = useState(false)
-  const [likeCount, setLikeCount] = useState(post.likes_count || 0)
-  const navigate = useNavigate()
+  // const [isLiked, setIsLiked] = useState(false)
+  // const [likeCount, setLikeCount] = useState(post.likes_count || 0)
+  // const [likeCount, setLikeCount] = useState(post.likeCount || 0);
 
+  const [isLiked, setIsLiked] = useState(post.isLiked || false);
+const [likeCount, setLikeCount] = useState(post.likeCount || 0);
+
+
+  const navigate = useNavigate()
+  const dispatch = useDispatch()
 const defaultProfilePic =
   `https://ui-avatars.com/api/?background=cccccc&color=ffffff&name=${post.user?.full_name?.[0] || 'U'}`;
 
@@ -26,6 +35,8 @@ const defaultProfilePic =
   const handleLike = () => {
     setIsLiked(!isLiked)
     setLikeCount(isLiked ? likeCount - 1 : likeCount + 1)
+    dispatch(toggleLike(post._id))
+
   }
 
   return (
