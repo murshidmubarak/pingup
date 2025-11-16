@@ -16,6 +16,7 @@ import CreatePost from "./components/pages/CreatePost";
 import Signup from "./components/pages/Signup";
 import Settings from "./components/pages/Settings";
 import Beginning from "./components/pages/beginning.jsx";
+import StoryAddModal from "./components/storyAddModal.jsx";
 
 const App = () => {
   const dispatch = useDispatch();
@@ -102,6 +103,7 @@ const App = () => {
         <Route path="create-post" element={<CreatePost />} />
         <Route path="settings" element={<Settings />} />
         <Route path="beginning" element={<Beginning/>}/>
+        <Route path="storyModal" element={<StoryAddModal />} />
         <Route path="*" element={<Navigate to="/" />} />
       </Route>
     </Routes>

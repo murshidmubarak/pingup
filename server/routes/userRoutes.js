@@ -4,6 +4,7 @@ const router = express.Router();
 import userController from '../controllers/userController/userController.js';
 import { protect } from "../middleware/authMiddleware.js";
 import postController from '../controllers/userController/postController.js';
+import storyController from '../controllers/userController/storyController.js';
 
 import multer from "multer";
 const upload = multer();    // for createPost images
@@ -32,5 +33,11 @@ router.post('/upload-chunk', protect, uploadChunks.single("chunk"), postControll
 router.post('/merge-chunks', protect, postController.mergeChunks);
 router.get('/fetchFeed', protect, postController.fetchFeedPosts);
 router.put('/like/:postId', protect, postController.toggleLikeOnPost);
+
+
+
+router.post('/createStory', protect, upload.array('files'), storyController.createStory);
+router.post('/uploadStoryChunk', protect, uploadChunks.single("chunk"), storyController.uploadStoryChunk);
+router.post('/mergeStoryChunks', protect, storyController.mergeStoryChunks);
 
 export default router;

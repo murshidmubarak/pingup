@@ -318,3 +318,41 @@
   width: 0%;
   transition: width 0.1s linear;
 }
+
+
+
+
+
+
+.your-story-ring {
+  background: transparent !important;
+  border: 2px solid #dbdbdb !important;
+  padding: 2px !important;
+}
+
+/* Ensure avatar supports absolute positioning */
+.your-story-avatar {
+  position: relative;
+  overflow: visible; /* IMPORTANT — ensures the + button is visible outside */
+}
+
+
+/* Small blue + button at bottom-right (Instagram style) */
+.your-story-plus-btn {
+  position: absolute;
+  bottom: -10px;   /* hang slightly outside the circle */
+  right: -10px;    /* push outward to the right */
+  width: 24px;
+  height: 24px;
+  background: #0095f6; /* Instagram blue */
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+  z-index: 10;
+}
+
+
+

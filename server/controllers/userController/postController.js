@@ -7,6 +7,7 @@ import path from "path";
 import mongoose from "mongoose";
 
 const createPost = async (req, res) => {
+  console.log("Creating post...");
   try {
     // Authenticate
     const token = req.headers.authorization?.split(" ")[1];
@@ -60,6 +61,7 @@ const createPost = async (req, res) => {
 };
 
  const uploadChunk = (req, res) => {
+  console.log("Uploading chunk...");
   try {
     const { fileId, chunkIndex } = req.body;
     if (!req.file) {
@@ -77,6 +79,7 @@ const createPost = async (req, res) => {
 };
 
 const mergeChunks = async (req, res) => {
+  console.log("Merging chunks...");
   try {
     const { fileId, totalChunks, fileName } = req.body;
 
@@ -100,8 +103,18 @@ const mergeChunks = async (req, res) => {
         folder: "/posts",
       });
 
+      const newPost = new Post({
+        user: req.user.id,
+        description: req.body.description || "",
+        media: [{ url: uploaded.url, type: "video" }],
+      });
+
+      await newPost.save();
+
       // Remove merged file after upload
       fs.unlinkSync(mergedFilePath);
+
+
 
       return res.status(200).json({
         message: "File uploaded successfully",
