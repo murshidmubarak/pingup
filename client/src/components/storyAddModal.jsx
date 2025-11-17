@@ -6,8 +6,9 @@ import Cropper from 'react-easy-crop';
 import { useNavigate } from "react-router-dom";
 import api from '../api/axios';
 import { fetchUser } from "../features/user/userSlice";
+import { postStory,uploadStoryChunk,mergeStoryChunks } from '../features/story/storySlice';
 
-const CreatePost = () => {
+const StoryAddModal = () => {
   const [media, setMedia] = useState([]);
   const [loading, setLoading] = useState(false);
   const dispatch = useDispatch();
@@ -44,27 +45,72 @@ const CreatePost = () => {
     initializeProfile();
   }, [currentUser, dispatch]);
 
+
+    const CHUNK_SIZE = 5 * 1024 * 1024; // 5MB
+  
+  const uploadFileInChunks = async (file) => {
+    const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
+    const fileId = `${file.name}-${file.size}-${Date.now()}`;
+  
+    for (let chunkIndex = 0; chunkIndex < totalChunks; chunkIndex++) {
+      const start = chunkIndex * CHUNK_SIZE;
+      const end = Math.min(start + CHUNK_SIZE, file.size);
+      const chunk = file.slice(start, end);
+  
+      const fd = new FormData();
+      fd.append("chunk", chunk);
+      fd.append("chunkIndex", chunkIndex);
+      fd.append("totalChunks", totalChunks);
+      fd.append("fileId", fileId);
+      fd.append("fileName", file.name);
+
+      await dispatch(uploadStoryChunk(fd)).unwrap();
+      
+  
+      // await api.post("/upload-chunk", fd);
+    }
+  
+    // const res = await api.post("/merge-chunks", { fileId, totalChunks, fileName: file.name });
+    const res = await dispatch(mergeStoryChunks({ fileId, totalChunks, fileName: file.name })).unwrap();
+    return res.url;
+  };
+
+
+
+
   // Upload Post
   const handlePostSubmit = async () => {
     setLoading(true);
     try {
-      const formData = new FormData();
-      media.forEach(file => formData.append("files", file));
-
-      const res = await api.post("/createPost", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
-
-      alert("Post created successfully!");
+      let uploadedMedia = [];
+  
+      // Upload each file (chunk upload)
+      for (const file of media) {
+        const url = await uploadFileInChunks(file);  // ← we now USE the returned URL
+  
+        uploadedMedia.push({
+          url,
+          type: file.type.startsWith("video") ? "video" : "image"
+        });
+      }
+      console.log("Uploaded Media:", uploadedMedia);
+  
+      // Create post with media URLs
+      // await api.post("/createPost", {
+      //   content,
+      //   media: JSON.stringify(uploadedMedia)
+      // });
+      await dispatch(postStory({ media: JSON.stringify(uploadedMedia) })).unwrap();
+  
       navigate("/");
+  
     } catch (error) {
       alert(error.response?.data?.message || "Error creating post");
     }
+  
     setLoading(false);
   };
+
 
   // Cropper
   const getCroppedImg = async (imageSrc, croppedAreaPixels) => {
@@ -286,4 +332,4 @@ const CreatePost = () => {
   );
 };
 
-export default CreatePost;
+export default StoryAddModal;

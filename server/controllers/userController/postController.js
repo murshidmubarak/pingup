@@ -9,54 +9,45 @@ import mongoose from "mongoose";
 const createPost = async (req, res) => {
   console.log("Creating post...");
   try {
-    // Authenticate
-    const token = req.headers.authorization?.split(" ")[1];
-    if (!token) {
-      return res.status(401).json({ message: "Unauthorized: No token provided" });
-    }
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const userId = decoded.id;
-    const user = await Users.findById(userId);
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
+    const userId = req.user.id;
+    const description = req.body.content || "";
 
-    // Get description (or content)
-    const description = req.body.content || req.body.description || "";
-
-    // Process files using multer and upload to ImageKit
     let media = [];
 
-    if (req.files && req.files.length > 0) {
-  for (const file of req.files) {
-    const uploaded = await imagekit.files.upload({
-      file: file.buffer.toString("base64"),
-      fileName: file.originalname,
-      folder: "/posts",
-    });
-
-    const type = file.mimetype.startsWith("video/") ? "video" : "image";
-    
-    media.push({
-      url: uploaded.url,
-      type,
-    });
+    // case 1: chunk upload passed as URLs
+if (req.body.media) {
+  try {
+    media = JSON.parse(req.body.media);
+  } catch (err) {
+    console.log("Media parse error:", err);
+    media = [];
   }
 }
 
 
-    // Create and save post
-    const newPost = new Post({
-      user: userId,
-      description: description,
-      media,
-    });
+    // case 2: normal image upload
+    if (req.files && req.files.length > 0) {
+      for (const file of req.files) {
+        const uploaded = await imagekit.files.upload({
+          file: file.buffer.toString("base64"),
+          fileName: file.originalname,
+          folder: "/posts",
+        });
 
-    await newPost.save();
-    res.status(201).json({ message: "Post created successfully", post: newPost });
+        media.push({
+          url: uploaded.url,
+          type: file.mimetype.startsWith("video/") ? "video" : "image"
+        });
+      }
+    }
+
+    const post = new Post({ user: userId, description, media });
+    await post.save();
+
+    res.status(201).json({ post });
+
   } catch (error) {
-    console.error("Error creating post:", error);
-    res.status(500).json({ message: "Internal server error" });
+    res.status(500).json({ message: "Error creating post" });
   }
 };
 
@@ -86,46 +77,35 @@ const mergeChunks = async (req, res) => {
     const mergedFilePath = path.join("tmp/uploads", `${fileId}-merged`);
     const writeStream = fs.createWriteStream(mergedFilePath);
 
-    // Merge chunks one by one
     for (let i = 0; i < totalChunks; i++) {
       const chunkPath = path.join("tmp/uploads", `${fileId}-${i}`);
       const chunk = fs.readFileSync(chunkPath);
       writeStream.write(chunk);
-      fs.unlinkSync(chunkPath); // remove chunk
+      fs.unlinkSync(chunkPath);
     }
+
     writeStream.end();
 
     writeStream.on("finish", async () => {
-      // ✅ Upload final merged file to ImageKit using Stream
       const uploaded = await imagekit.files.upload({
         file: fs.createReadStream(mergedFilePath),
-        fileName: fileName || `${fileId}.mp4`,
+        fileName,
         folder: "/posts",
       });
 
-      const newPost = new Post({
-        user: req.user.id,
-        description: req.body.description || "",
-        media: [{ url: uploaded.url, type: "video" }],
-      });
-
-      await newPost.save();
-
-      // Remove merged file after upload
       fs.unlinkSync(mergedFilePath);
 
-
-
       return res.status(200).json({
-        message: "File uploaded successfully",
-        url: uploaded.url,
+        message: "Merged file uploaded",
+        url: uploaded.url
       });
     });
+
   } catch (error) {
-    console.log(error);
     res.status(500).json({ message: "Error merging chunks" });
   }
 };
+
 
 
 

@@ -8,13 +8,13 @@ const initialState = {
 };
 
 export const postStory = createAsyncThunk(
-  'story/postStory',
+  'story/createStory',
   async (storyData, { rejectWithValue }) => {
     try {
       const token = localStorage.getItem('token');
       const { data } = await api.post('/createStory', storyData, {    
         headers: {
-          'Content-Type': 'multipart/form-data',
+            contentType: 'multipart/form-data',
             Authorization: `Bearer ${token}`,
         },
         });
@@ -26,6 +26,51 @@ export const postStory = createAsyncThunk(
     } catch (error) {
         const errorMessage = error.response?.data?.message || 'Failed to post story';
         return rejectWithValue(errorMessage);
+    }
+  }
+);
+
+export const uploadStoryChunk = createAsyncThunk(
+  'story/uploadStoryChunk',
+  async (chunkData, { rejectWithValue }) => {
+    try {
+      const token = localStorage.getItem('token');
+      const { data } = await api.post('/uploadStoryChunk', chunkData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (data.success) {
+        return data;
+      } else {
+        return rejectWithValue(data.message || 'Failed to upload story chunk');
+      }
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || 'Failed to upload story chunk';
+      return rejectWithValue(errorMessage);
+    }
+  }
+);
+
+export const mergeStoryChunks = createAsyncThunk(
+  'story/mergeStoryChunks',
+  async (mergeData, { rejectWithValue }) => {
+    try {
+      const token = localStorage.getItem('token');
+      const { data } = await api.post('/mergeStoryChunks', mergeData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (data.success) {
+        return data;
+      }
+      else {
+        return rejectWithValue(data.message || 'Failed to merge story chunks');
+      }
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || 'Failed to merge story chunks';
+      return rejectWithValue(errorMessage);
     }
   }
 );

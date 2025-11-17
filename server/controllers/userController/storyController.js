@@ -1,106 +1,158 @@
 import Stories from '../../models/storySchema.js';
 import Users from '../../models/userProfileSchema.js';
-import mongoose from 'mongoose';
-import fs from 'fs';
-import path from 'path';
+import fs from "fs";
+import path from "path";
+import imagekit from "../../configs/imageKit.js";
+import jwt from "jsonwebtoken"; 
+
+// Create a story
+// const createStory = async (req, res) => {
+//   try {
+//     const userId = req.user.id;  // from protect middleware
+
+//     const user = await Users.findById(userId);
+//     if (!user) return res.status(404).json({ message: "User not found" });
+
+//     let media = [];
+
+//     // If media URLs came from chunk upload
+//     if (req.body.media) {
+//       try {
+//         media = JSON.parse(req.body.media);
+//       } catch (err) {
+//         console.log("Media JSON parse error:", err);
+//       }
+//     }
 
 
-// Create a new story
-const createStory = async(req,res)=>{
+//     if (media.length === 0) {
+//       return res.status(400).json({ message: "Story cannot be empty" });
+//     }
 
-    try {
-         const token = req.headers.authorization?.split(" ")[1];
-            if (!token) {
-              return res.status(401).json({ message: "Unauthorized: No token provided" });
-            }
-            const decoded = jwt.verify(token, process.env.JWT_SECRET);
-            const userId = decoded.id;
-            const user = await Users.findById(userId);
-            if (!user) {
-              return res.status(404).json({ message: "User not found" });
-            }
+//     const newStory = new Stories({
+//       user: userId,
+//       media,
+//       createdAt: Date.now(),
+//     });
 
-                let media = [];
-            
-                if (req.files && req.files.length > 0) {
-              for (const file of req.files) {
-                const uploaded = await imagekit.files.upload({
-                  file: file.buffer.toString("base64"),
-                  fileName: file.originalname,
-                  folder: "/posts",
-                });
-            
-                const type = file.mimetype.startsWith("video/") ? "video" : "image";
-                
-                media.push({
-                  url: uploaded.url,
-                  type,
-                });
-              }
-            }
+//     await newStory.save();
 
-        const newStory = new Stories({
-            user: userId,
-            media,
-            createdAt: new Date(),
-        });
+//     return res.status(201).json({ success: true, story: newStory });
+//   } catch (err) {
+//     console.error("Error creating story:", err);
+//     res.status(500).json({ message: err.message });
+//   }
+// };
 
+const createStory = async (req, res) => {
+  try {
+    const userId = req.user.id;
 
-        await newStory.save();
-        res.status(201).json({ success: true, story: newStory });
-
-    } catch (error) {
-        console.error("Error creating story:", error);
-        res.status(500).json({ success: false, message: error.message });
-    
+    // Parse media (JSON string)
+    let media = [];
+    if (typeof req.body.media === "string") {
+      media = JSON.parse(req.body.media);
+    } else {
+      media = req.body.media || [];
     }
-    
-}
 
 
-// Fetch stories for the logged-in user
+    if (!media.length) {
+      return res.status(400).json({
+        success: false,
+        message: "Media is required",
+      });
+    }
+
+    const newStory = new Stories({
+      user: userId,
+      // caption: req.body.caption || "",
+      media: media,
+      viewers: [],
+    });
+
+    const savedStory = await newStory.save();
+
+    return res.status(201).json({
+      success: true,
+      story: savedStory,
+    });
+
+  } catch (error) {
+    console.error("Error creating story:", error);
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Failed to create story",
+    });
+  }
+};
+
+
 const uploadStoryChunk = async (req, res) => {
-    try {
-     const { fileId, chunkIndex } = req.body;
-     if (!req.file) {
-       return res.status(400).json({ message: "No chunk uploaded" });
-     }
- 
-     const chunkPath = path.join("tmp/uploads", `${fileId}-${chunkIndex}`);
-     fs.renameSync(req.file.path, chunkPath);
- 
-     res.status(200).json({ message: "Chunk uploaded successfully" });
-        
-    } catch (error) {
-        console.error("Error uploading story chunk:", error);
-        res.status(500).json({ message: "Server error while uploading chunk" });
-        
-    }
-}
+  console.log("Uploading story chunk...");
+  try {
+    const { fileId, chunkIndex } = req.body;
+
+    if (!req.file)
+      return res.status(400).json({ message: "No chunk uploaded" });
+
+    const uploadDir = "tmp/uploads";
+    if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+
+    const chunkPath = path.join(uploadDir, `${fileId}-${chunkIndex}`);
+    fs.renameSync(req.file.path, chunkPath);
+
+return res.status(200).json({ success: true, message: "Chunk saved" });
+  } catch (err) {
+    console.error("Error uploading story chunk:", err);
+    res.status(500).json({ message: "Chunk upload failed" });
+  }
+};
 
 const mergeStoryChunks = async (req, res) => {
-    try {
-        
-    } catch (error) {
-        
+  console.log("Merging story chunks...");
+  try {
+    const { fileId, totalChunks, fileName } = req.body;
+
+    const uploadDir = "tmp/uploads";
+    const mergedPath = path.join(uploadDir, `${fileId}-merged`);
+
+    const writeStream = fs.createWriteStream(mergedPath);
+
+    for (let i = 0; i < Number(totalChunks); i++) {
+      const chunkPath = path.join(uploadDir, `${fileId}-${i}`);
+      writeStream.write(fs.readFileSync(chunkPath));
+      fs.unlinkSync(chunkPath);
     }
-}
 
+    writeStream.end();
 
+    writeStream.on("finish", async () => {
+      const uploaded = await imagekit.files.upload({
+        file: fs.createReadStream(mergedPath),
+        fileName,
+        folder: "/stories",
+      });
 
+      fs.unlinkSync(mergedPath);
 
+return res.status(200).json({
+  success: true,
+  url: uploaded.url
+});
 
+    });
 
-
-
-
-
-
-export default {
-    createStory,
-    uploadStoryChunk,
-    mergeStoryChunks
+  } catch (err) {
+    console.error("Error merging story chunks:", err);
+    res.status(500).json({ message: "Merge failed" });
+  }
 };
 
 
 
+export default {
+  createStory,
+  uploadStoryChunk,
+  mergeStoryChunks,
+};

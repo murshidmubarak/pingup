@@ -48,102 +48,64 @@ const CreatePost = () => {
   // ---------------------- CHUNK UPLOAD LOGIC ----------------------
   const CHUNK_SIZE = 5 * 1024 * 1024; // 5MB
 
-  const uploadFileInChunks = async (file) => {
-    const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
-    const fileId = `${file.name}-${file.size}-${Date.now()}`;
+const uploadFileInChunks = async (file) => {
+  const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
+  const fileId = `${file.name}-${file.size}-${Date.now()}`;
 
-    for (let chunkIndex = 0; chunkIndex < totalChunks; chunkIndex++) {
-      const start = chunkIndex * CHUNK_SIZE;
-      const end = Math.min(start + CHUNK_SIZE, file.size);
-      const chunk = file.slice(start, end);
+  for (let chunkIndex = 0; chunkIndex < totalChunks; chunkIndex++) {
+    const start = chunkIndex * CHUNK_SIZE;
+    const end = Math.min(start + CHUNK_SIZE, file.size);
+    const chunk = file.slice(start, end);
 
-      const formData = new FormData();
-      formData.append("chunk", chunk);
-      formData.append("chunkIndex", chunkIndex);
-      formData.append("totalChunks", totalChunks);
-      formData.append("fileId", fileId);
-      formData.append("fileName", file.name);
+    const fd = new FormData();
+    fd.append("chunk", chunk);
+    fd.append("chunkIndex", chunkIndex);
+    fd.append("totalChunks", totalChunks);
+    fd.append("fileId", fileId);
+    fd.append("fileName", file.name);
 
-      await api.post("/upload-chunk", formData, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
+    await api.post("/upload-chunk", fd);
+  }
+
+  const res = await api.post("/merge-chunks", { fileId, totalChunks, fileName: file.name });
+  return res.data.url;
+};
+
+
+  // ---------------------- POST SUBMIT ----------------------
+const handlePostSubmit = async () => {
+  setLoading(true);
+  try {
+    let uploadedMedia = [];
+
+    // Upload each file (chunk upload)
+    for (const file of media) {
+      const url = await uploadFileInChunks(file);  // ← we now USE the returned URL
+
+      uploadedMedia.push({
+        url,
+        type: file.type.startsWith("video") ? "video" : "image"
       });
     }
 
-    await api.post("/merge-chunks", { fileId, totalChunks, fileName: file.name }, {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
-      },
-    });
-  };
-
-  // ---------------------- POST SUBMIT ----------------------
-  // const handlePostSubmit = async () => {
-  //   setLoading(true);
-  //   try {
-  //     // Upload files first (either chunked or normal)
-  //     for (const file of media) {
-  //       if (file.size > 1 * 1024 * 1024) {
-  //         // Files larger than 100MB use chunk upload
-  //         await uploadFileInChunks(file);
-  //       } else {
-  //         // Files smaller than 100MB use normal upload
-  //         const formData = new FormData();
-  //         formData.append("files", file);
-
-  //         await api.post("/createPost", formData, {
-  //           headers: {
-  //             Authorization: `Bearer ${localStorage.getItem("token")}`,
-  //           },
-  //         });
-  //       }
-  //     }
-
-  //     // Then submit the post content
-  //     const res = await api.post(
-  //       "/createPost",
-  //       { content },
-  //       {
-  //         headers: {
-  //           Authorization: `Bearer ${localStorage.getItem("token")}`,
-  //         },
-  //       }
-  //     );
-
-  //     alert(res.data.message || "Post created successfully!");
-  //     navigate("/");
-  //   } catch (error) {
-  //     alert(error.response?.data?.message || "Error creating post");
-  //   }
-  //   setLoading(false);
-  // };
-
-
-  const handlePostSubmit = async () => {
-  setLoading(true);
-  try {
-    const formData = new FormData();
-    formData.append("content", content);
-
-    media.forEach(file => {
-      formData.append("files", file); // collect all files together
+    // Create post with media URLs
+    await api.post("/createPost", {
+      content,
+      media: JSON.stringify(uploadedMedia)
     });
 
-    const res = await api.post("/createPost", formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
-      },
-    });
-
-    alert("Post created successfully!");
     navigate("/");
+
   } catch (error) {
     alert(error.response?.data?.message || "Error creating post");
   }
+
   setLoading(false);
 };
+
+
+
+
 
   // ---------------------- CROPPER ----------------------
   const getCroppedImg = async (imageSrc, croppedAreaPixels) => {
