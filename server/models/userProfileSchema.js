@@ -52,11 +52,11 @@ profile_picture:{
   },
 followers:[{
     type:String,
-    ref:"User"
+    ref: "UserProfile"
 }],
 following:[{
     type:String,
-    ref:"User"  
+    ref:"UserProfile"  
 }],
 
 },{timestamps:true},{minimize:false});

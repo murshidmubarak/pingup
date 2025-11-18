@@ -80,7 +80,7 @@ export const fetchUserStories = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const token = localStorage.getItem('token');
-      const { data } = await api.get('/getUserStories', {
+      const { data } = await api.get('/fetchUserStories', {
         headers: {
           Authorization: `Bearer ${token}`,
         },

@@ -149,10 +149,115 @@ return res.status(200).json({
   }
 };
 
+// const fetchUserStories = async (req, res) => {
+//   console.log("Fetching user stories...");
+//   try {
+//     const userId = req.user.id;
+
+//     // 1. Get following list (very fast: only 1 user doc)
+//     const user = await Users.findById(userId).select("following").lean();
+
+//     if (!user) {
+//       return res.status(404).json({ success: false, message: "User not found" });
+//     }
+
+//     // Include own ID + users you follow
+//     const usersToFetch = [...user.following, userId];
+
+//     // 2. Fetch stories from these users (very fast: indexed)
+// const stories = await Stories.find({
+//   user: { $in: usersToFetch },
+//   expiresAt: { $gt: Date.now() },
+// })
+//   .sort({ createdAt: -1 })
+//   .populate({
+//     path: "user",
+//     model: "UserProfile",
+//     select: "username profile_picture",
+//   })
+//   .lean();
+
+
+
+//     return res.status(200).json({
+//       success: true,
+//       stories, // flat list → easiest for frontend
+//     });
+//   } catch (error) {
+//     console.error("Story fetch error:", error);
+//     return res.status(500).json({
+//       success: false,
+//       message: "Failed to fetch stories",
+//     });
+//   }
+// };
+
+const fetchUserStories = async (req, res) => {
+  console.log("Fetching user stories...");
+  try {
+    const userId = req.user.id;
+
+    // 1. Fetch user following list
+    const user = await Users.findById(userId)
+      .select("following")
+      .lean();
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    // Own ID + followings
+    const usersToFetch = [...user.following, userId];
+
+    // 2. Fetch stories (flat)
+    const stories = await Stories.find({
+      user: { $in: usersToFetch },
+      expiresAt: { $gt: Date.now() },
+    })
+      .sort({ createdAt: -1 })
+      .populate({
+        path: "user",
+        model: "UserProfile",
+        select: "username profile_picture",
+      })
+      .lean();
+
+    // 3. GROUP STORIES BY USER (Instagram style)
+    const grouped = {};
+
+    stories.forEach((story) => {
+      const uid = story.user._id.toString();
+
+      if (!grouped[uid]) {
+        grouped[uid] = {
+          user: story.user,
+          stories: [],
+        };
+      }
+
+      grouped[uid].stories.push(story);
+    });
+
+    const finalResult = Object.values(grouped);
+
+    return res.status(200).json({
+      success: true,
+      stories: finalResult,
+    });
+
+  } catch (error) {
+    console.error("Story fetch error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch stories",
+    });
+  }
+};
 
 
 export default {
   createStory,
   uploadStoryChunk,
   mergeStoryChunks,
+  fetchUserStories,
 };

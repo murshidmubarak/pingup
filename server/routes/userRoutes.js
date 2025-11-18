@@ -39,5 +39,6 @@ router.put('/like/:postId', protect, postController.toggleLikeOnPost);
 router.post('/createStory', protect, upload.array('files'), storyController.createStory);
 router.post('/uploadStoryChunk', protect, uploadChunks.single("chunk"), storyController.uploadStoryChunk);
 router.post('/mergeStoryChunks', protect, storyController.mergeStoryChunks);
+router.get('/fetchUserStories', protect, storyController.fetchUserStories);
 
 export default router;

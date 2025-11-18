@@ -14,42 +14,45 @@ const mediaSchema = new mongoose.Schema(
       required: true,
     },
   },
-  { _id: false } // No extra ID -> lighter document
+  { _id: false }
 );
 
 const storySchema = new mongoose.Schema(
   {
     user: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "UserProfile",
+      ref: "User",
       required: true,
-      index: true, // FAST fetch for millions of stories
+      index: true,
     },
 
     media: {
-      type: [mediaSchema], // ARRAY of media
-
+      type: [mediaSchema],
+      validate: {
+        validator: (v) => Array.isArray(v) && v.length > 0 && v.length <= 10,
+        message: "Media must contain 1–10 items",
+      },
     },
 
     viewers: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "UserProfile",
-        index: true, // Makes "has user seen?" fast
+        ref: "User",
+        index: true,
       },
     ],
 
     expiresAt: {
       type: Date,
       required: true,
-      default: () => Date.now() + 24 * 60 * 60 * 1000, // 24 hours
+      default: () => Date.now() + 24 * 60 * 60 * 1000,
       index: true,
     },
   },
   { timestamps: true }
 );
 
-// TTL index to auto-delete expired stories
+// TTL auto-delete after 24 hours
 storySchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
 const Story = mongoose.model("Story", storySchema);

@@ -1,181 +1,301 @@
-import React, { useEffect, useState, useRef } from 'react'
-import { dummyStoriesData } from '../assets/assets'
-import moment from 'moment'
-import { Plus } from 'lucide-react'
-import './StoriesBar.css'
+import React, { useEffect, useState, useRef } from "react";
+import moment from "moment";
+import { Plus } from "lucide-react";
+import "./StoriesBar.css";
 import { useNavigate } from "react-router-dom";
 
+const StoriesBar = ({ stories }) => {
+  const [selectedGroup, setSelectedGroup] = useState(null);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+  const [progress, setProgress] = useState(0);
 
-const StoriesBar = () => {
-  const [stories, setStories] = useState([])
-  const [selectedStory, setSelectedStory] = useState(null)
-  const [isPaused, setIsPaused] = useState(false)
-  const [progress, setProgress] = useState(0)
   const navigate = useNavigate();
+  const videoRef = useRef(null);
 
+  // Swipe refs
+  const touchStartX = useRef(0);
+  const touchEndX = useRef(0);
 
-  const videoRef = useRef(null)
-  const timerRef = useRef(null)
+  const selectedStory =
+    selectedGroup ? selectedGroup.stories[currentIndex] : null;
 
-  // Fetch stories
-  const fetchUserStories = async () => {
-    setStories(dummyStoriesData)
-  }
-
+  // ============================================================
+  // FORCE VIDEO INSTANT PLAY 
+  // ============================================================
   useEffect(() => {
-    fetchUserStories()
-  }, [])
+    if (!selectedStory) return;
 
+    const hasVideo = selectedStory.media.some((m) => m.type === "video");
 
-// 🟢 Progress Bar Logic
-useEffect(() => {
-  if (!selectedStory || isPaused) return
+    if (hasVideo && videoRef.current) {
+      const v = videoRef.current;
 
-  let interval
-  let duration = 5000 // default 5 seconds for image/text
+      v.preload = "auto";
 
-  if (selectedStory.media_type === 'video' && videoRef.current) {
-    const vid = videoRef.current
-    duration = vid.duration ? vid.duration * 1000 : 5000
-  }
+      const tryToPlay = async () => {
+        try {
+          await v.play();
+        } catch {}
+      };
 
-  // Calculate how much time has already elapsed based on current progress
-  const alreadyElapsed = (progress / 100) * duration
-  const startTime = Date.now() - alreadyElapsed
+      tryToPlay();
 
-  interval = setInterval(() => {
-    const elapsed = Date.now() - startTime
-    const percent = Math.min((elapsed / duration) * 100, 100)
-    setProgress(percent)
+      const onMeta = () => tryToPlay();
+      const onCan = () => tryToPlay();
 
-    if (percent >= 100) {
-      clearInterval(interval)
-      closeModal()
+      v.addEventListener("loadedmetadata", onMeta);
+      v.addEventListener("canplay", onCan);
+
+      return () => {
+        v.removeEventListener("loadedmetadata", onMeta);
+        v.removeEventListener("canplay", onCan);
+      };
     }
-  }, 100)
+  }, [selectedStory]);
 
-  return () => clearInterval(interval)
-}, [selectedStory, isPaused])
+  // ============================================================
+  // PROGRESS TIMER
+  // ============================================================
+  useEffect(() => {
+    if (!selectedStory || isPaused) return;
 
+    let interval;
+    let duration = 5000;
 
+    const hasVideo = selectedStory.media.some((m) => m.type === "video");
 
+    if (hasVideo && videoRef.current?.duration) {
+      duration = videoRef.current.duration * 1000;
+    }
 
+    const elapsed = (progress / 100) * duration;
+    const startTime = Date.now() - elapsed;
 
+    interval = setInterval(() => {
+      if (isPaused) return;
 
-  // Handle content click (pause/resume)
-  const handleContentClick = (e) => {
-    e.stopPropagation()
+      const now = Date.now();
+      const pct = Math.min(((now - startTime) / duration) * 100, 100);
 
-    if (selectedStory.media_type === 'video' && videoRef.current) {
-      if (isPaused) {
-        videoRef.current.play()
-      } else {
-        videoRef.current.pause()
+      setProgress(pct);
+
+      if (pct >= 100) {
+        clearInterval(interval);
+        goNext();
       }
+    }, 60);
+
+    return () => clearInterval(interval);
+  }, [selectedStory, isPaused]);
+
+  // ============================================================
+  // NEXT
+  // ============================================================
+  const goNext = () => {
+    if (!selectedGroup) return;
+
+    const groups = stories;
+    const groupIndex = groups.findIndex(
+      (g) => g.user._id === selectedGroup.user._id
+    );
+
+    if (currentIndex + 1 < selectedGroup.stories.length) {
+      setCurrentIndex((c) => c + 1);
+      setProgress(0);
+      return;
     }
 
-    setIsPaused(!isPaused)
-  }
+    if (groupIndex + 1 < groups.length) {
+      setSelectedGroup(groups[groupIndex + 1]);
+      setCurrentIndex(0);
+      setProgress(0);
+      return;
+    }
 
-  // Close story and reset states
+    closeModal();
+  };
+
+  // ============================================================
+  // PREV
+  // ============================================================
+  const goPrev = () => {
+    if (!selectedGroup) return;
+
+    const groups = stories;
+    const groupIndex = groups.findIndex(
+      (g) => g.user._id === selectedGroup.user._id
+    );
+
+    if (currentIndex > 0) {
+      setCurrentIndex((c) => c - 1);
+      setProgress(0);
+      return;
+    }
+
+    if (groupIndex > 0) {
+      const prev = groups[groupIndex - 1];
+      setSelectedGroup(prev);
+      setCurrentIndex(prev.stories.length - 1);
+      setProgress(0);
+      return;
+    }
+
+    closeModal();
+  };
+
+  // ============================================================
+  // CLOSE
+  // ============================================================
   const closeModal = () => {
-    setSelectedStory(null)
-    setIsPaused(false)
-    setProgress(0)
-  }
+    setSelectedGroup(null);
+    setCurrentIndex(0);
+    setIsPaused(false);
+    setProgress(0);
+  };
 
+  // ============================================================
+  // HOLD TO PAUSE
+  // ============================================================
+  const handleHoldStart = () => {
+    setIsPaused(true);
+    videoRef.current?.pause();
+  };
+  const handleHoldEnd = () => {
+    setIsPaused(false);
+    videoRef.current?.play();
+  };
+
+  // ============================================================
+  // SWIPE
+  // ============================================================
+  const handleTouchStart = (e) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchMove = (e) => {
+    touchEndX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = () => {
+    const distance = touchStartX.current - touchEndX.current;
+
+    if (Math.abs(distance) < 50) return;
+
+    if (distance > 50) goNext();
+    else goPrev();
+  };
+
+  // ============================================================
+  // UI
+  // ============================================================
   return (
     <>
-      {/* ===== Stories Bar ===== */}
+      {/* STORY STRIP */}
       <div className="stories-container">
         <div className="stories-scroll">
+          {/* Own Story */}
+          <div className="story-item">
+            <div className="story-ring your-story-ring">
+              <div className="story-avatar your-story-avatar">
+                <img
+                  src="https://cdn-icons-png.flaticon.com/512/149/149071.png"
+                  alt="Your Story"
+                />
+                <button
+                  className="your-story-plus-btn"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate("/storyModal");
+                  }}
+                >
+                  <Plus size={14} strokeWidth={3} />
+                </button>
+              </div>
+            </div>
+            <span className="story-username">Your Story</span>
+          </div>
 
-        {/* Create Your Story  */}
-<div className="story-item">
-  <div className="story-ring your-story-ring">
-    <div className="story-avatar your-story-avatar">
-<img
-  src="https://cdn-icons-png.flaticon.com/512/149/149071.png"
-  alt="Your Story"
-/>
-
-      {/* <div className="your-story-plus-btn">
-        <Plus size={14} strokeWidth={3} />
-      </div> */}
-      <button
-      className="your-story-plus-btn"
-      onClick={(e) => {
-       e.stopPropagation();
-       navigate('/storyModal');}}
-     >
-     <Plus size={14} strokeWidth={3} />
-     </button>
-
-    </div>
-  </div>
-  <span className="story-username">Your Story</span>
-</div>
-
-
-
-          {/* ✅ User Stories */}
-          {stories.map((story, index) => (
+          {/* Users */}
+          {stories.map((group, i) => (
             <div
-              key={index}
+              key={i}
               className="story-item"
               onClick={() => {
-                setSelectedStory(story)
-                setIsPaused(false)
-                setProgress(0)
+                setSelectedGroup(group);
+                setCurrentIndex(0);
+                setProgress(0);
               }}
             >
               <div className="story-ring">
                 <div className="story-avatar">
-                  <img
-                    src={story.user.profile_picture}
-                    alt={story.user.username}
-                  />
+                  <img src={group.user.profile_picture} alt="" />
                 </div>
               </div>
-              <span className="story-username">{story.user.username}</span>
+              <span className="story-username">{group.user.username}</span>
             </div>
           ))}
         </div>
       </div>
 
-      {/* ===== Story Modal ===== */}
+      {/* MODAL */}
       {selectedStory && (
         <div className="story-modal" onClick={closeModal}>
-          <div className="story-modal-content" onClick={handleContentClick}>
-            {/* ✖ Close Button */}
-            <button
-              className="close-btn"
-              onClick={(e) => {
-                e.stopPropagation()
-                closeModal()
-              }}
-            >
+          <div
+            className="story-modal-content"
+            onClick={(e) => e.stopPropagation()}
+            onMouseDown={handleHoldStart}
+            onMouseUp={handleHoldEnd}
+            onMouseLeave={handleHoldEnd}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={(e) => {
+              handleHoldEnd();
+              handleTouchEnd(e);
+            }}
+          >
+            {/* Close */}
+            <button className="close-btn" onClick={closeModal}>
               ×
             </button>
 
-            {/* 🔵 Progress Bar */}
-            <div className="story-progress-bar">
-              <div
-                className="story-progress-fill"
-                style={{ width: `${progress}%` }}
-              ></div>
+            {/* NAV */}
+            <button className="nav-btn left" onClick={goPrev}>
+              ‹
+            </button>
+            <button className="nav-btn right" onClick={goNext}>
+              ›
+            </button>
+
+            {/* Progress */}
+            <div className="progress-wrapper">
+              {selectedGroup.stories.map((s, i) => (
+                <div key={i} className="progress-segment">
+                  <div
+                    className="progress-fill"
+                    style={{
+                      width:
+                        i < currentIndex
+                          ? "100%"
+                          : i === currentIndex
+                          ? progress + "%"
+                          : "0%",
+                    }}
+                  />
+                </div>
+              ))}
             </div>
 
-            {/* 🧩 Header */}
+            {/* Header */}
             <div className="story-header">
               <img
-                src={selectedStory.user.profile_picture}
-                alt={selectedStory.user.username}
+                src={selectedGroup.user.profile_picture}
+                alt=""
                 className="story-header-avatar"
               />
               <div className="story-header-info">
                 <span className="story-header-username">
-                  {selectedStory.user.username}
+                  {selectedGroup.user.username}
                 </span>
                 <span className="story-header-time">
                   {moment(selectedStory.createdAt).fromNow()}
@@ -183,21 +303,26 @@ useEffect(() => {
               </div>
             </div>
 
-            {/* Story Content */}
+            {/* CONTENT */}
             <div className="story-content">
-              {selectedStory.media_type === 'image' ? (
-                <img src={selectedStory.media_url} alt="Story" />
-              ) : selectedStory.media_type === 'video' ? (
-                <video ref={videoRef} src={selectedStory.media_url} controls autoPlay />
-              ) : (
-                <div className="story-text-content">
-                  <p>{selectedStory.content}</p>
-                </div>
+              {selectedStory.media.map((m, i) =>
+                m.type === "image" ? (
+                  <img key={i} src={m.url} alt="" />
+                ) : (
+                  <video
+                    key={i}
+                    ref={videoRef}
+                    src={m.url}
+                    preload="auto"
+                    autoPlay
+                    playsInline
+                  />
+                )
               )}
             </div>
 
-            {/* 📝 Caption */}
-            {selectedStory.content && selectedStory.media_type !== 'text' && (
+            {/* CAPTION */}
+            {selectedStory.content && (
               <div className="story-caption">
                 <p>{selectedStory.content}</p>
               </div>
@@ -205,9 +330,8 @@ useEffect(() => {
           </div>
         </div>
       )}
-
     </>
-  )
-}
+  );
+};
 
-export default StoriesBar
+export default StoriesBar;
