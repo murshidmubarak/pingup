@@ -7,6 +7,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { fetchUser,updateUser,fetchUserById,followers } from '../../features/user/userSlice';
 import ProfileAdd from '../ProfileAdd';
 import EditProfileModal from '../EditProfileModal';
+import ProfilePosts from '../profilePosts';
 
 const Profile = () => {
   const dispatch = useDispatch();
@@ -26,7 +27,7 @@ const Profile = () => {
   const [user, setUser] = useState(null);
 
     const [isFollowing, setIsFollowing] = useState(false);
-  const [followersCount, setFollowersCount] = useState(0);
+    const [followersCount, setFollowersCount] = useState(0);
 
 
   
@@ -46,6 +47,17 @@ const Profile = () => {
     };
     initializeProfile();
   }, [dispatch, currentUser, profileId]);
+
+  // useEffect(() => {
+  //   const loadPosts = async () => {
+  //     const userId = profileId || currentUser?.id;
+  //     if (userId) {
+  //       const fetchedPosts = await dispatch(fetchUserPosts(userId)).unwrap();
+  //       setPosts(fetchedPosts);
+  //     }
+  //   };
+  //   loadPosts();
+  // }, [dispatch, profileId, currentUser]);
 
   const setupProfileData = async (userData) => {
     if (!profileId || profileId === userData.id) {
@@ -118,11 +130,13 @@ const Profile = () => {
                 <div className="stat-label">Posts</div>
               </div>
               <div className="stat-item clickable">
-                <div className="stat-number">{followersCount || 0}</div>
+                <div className="stat-number">{user.followers?.length || 0}</div>
+                {console.log("Followers count:", user.followers?.length)}
                 <div className="stat-label">Followers</div>
               </div>
               <div className="stat-item clickable">
                 <div className="stat-number">{user.following?.length || 0}</div>
+                {console.log("Following count:", user.following?.length)}
                 <div className="stat-label">Following</div>
               </div>
             </div>
@@ -200,7 +214,7 @@ const Profile = () => {
         </div>
 
         {/* Posts */}
-        <div className="profile-content">
+        {/* <div className="profile-content">
           {activeTab === 'posts' && (
             <div className="posts-grid">
               {posts.length > 0 ? (
@@ -223,7 +237,7 @@ const Profile = () => {
 
           {activeTab === 'saved' && <div className="empty-state">No saved posts</div>}
           {activeTab === 'tagged' && <div className="empty-state">No tagged posts</div>}
-        </div>
+        </div> */}
       </div>
 
 
@@ -246,6 +260,7 @@ const Profile = () => {
         onClose={() => setShowEditModal(false)}
         onOpenCrop={() => setShowCropModal(true)} // for profile crop
       />
+      <ProfilePosts activeTab={activeTab} setActiveTab={setActiveTab} user={user} />
     </div>
   );
 };

@@ -32,6 +32,7 @@ router.post('/upload-chunk', protect, uploadChunks.single("chunk"), postControll
 // ✅ Merge Chunks
 router.post('/merge-chunks', protect, postController.mergeChunks);
 router.get('/fetchFeed', protect, postController.fetchFeedPosts);
+router.get('/fetchUserPosts/:userId', protect, postController.fetchUserPosts);
 router.put('/like/:postId', protect, postController.toggleLikeOnPost);
 
 

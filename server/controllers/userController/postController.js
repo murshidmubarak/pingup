@@ -310,6 +310,21 @@ const fetchFeedPosts = async (req, res) => {
 };
 
 
+const fetchUserPosts = async (req, res) => {
+  try {
+    const userId = req.params.userId;
+    const posts = await Post.find({ user: userId, isDeleted: false })
+      .sort({ createdAt: -1 })
+      .lean();
+    res.status(200).json(posts);
+    
+  } catch (error) {
+    console.error("Error fetching user posts:", error);
+    res.status(500).json({ message: "Server Error" });
+  }
+};
+
+
 
 const toggleLikeOnPost = async (req, res) => {
 
@@ -358,5 +373,6 @@ export default{
   uploadChunk,
   mergeChunks,
   fetchFeedPosts,
-  toggleLikeOnPost
+  toggleLikeOnPost,
+  fetchUserPosts
 };

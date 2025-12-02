@@ -26,7 +26,7 @@ export const fetchUserPosts = createAsyncThunk(
   "posts/fetchUserPosts",
   async (userId, { rejectWithValue }) => {
     try {
-      const res = await api.get(`/posts/user/${userId}`);
+      const res = await api.get(`/fetchUserPosts/${userId}`);
       return res.data;
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || err.message);
@@ -79,6 +79,7 @@ const postsSlice = createSlice({
   loading: false,
   hasMore: true,
   error: null,
+  userPosts: [],
 
   },
   reducers: {},
@@ -121,7 +122,7 @@ const postsSlice = createSlice({
       })
       .addCase(fetchUserPosts.fulfilled, (state, action) => {
         state.loading = false;
-        state.posts = action.payload;
+        state.userPosts = action.payload;
       })
       .addCase(fetchUserPosts.rejected, (state, action) => {
         state.loading = false;
