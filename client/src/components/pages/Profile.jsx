@@ -59,24 +59,40 @@ const Profile = () => {
   //   loadPosts();
   // }, [dispatch, profileId, currentUser]);
 
-  const setupProfileData = async (userData) => {
-    if (!profileId || profileId === userData.id) {
-      setUser(userData);
-      setIsOwnProfile(true);
-    } else {
-      const otherUser = await dispatch(fetchUserById(profileId)).unwrap();
+  // const setupProfileData = async (userData) => {
+  //   if (!profileId || profileId === userData.id) {
+  //     setUser(userData);
+  //     setIsOwnProfile(true);
+  //   } else {
+  //     const otherUser = await dispatch(fetchUserById(profileId)).unwrap();
 
-      if (otherUser) {
-        setUser(otherUser);
-        setIsOwnProfile(false);
-        setFollowersCount(otherUser.followers?.length || 0);
-        // setIsFollowing(userData.following?.includes(profileId));
-        setIsFollowing(otherUser.isFollowed || false);
-      } else {
-        setUser(null);
-      }
-    }
-  };
+  //     if (otherUser) {
+  //       setUser(otherUser);
+  //       setIsOwnProfile(false);
+  //       setFollowersCount(otherUser.followers?.length || 0);
+  //       // setIsFollowing(userData.following?.includes(profileId));
+  //       setIsFollowing(otherUser.isFollowed || false);
+  //     } else {
+  //       setUser(null);
+  //     }
+  //   }
+  // };
+
+
+  const setupProfileData = async (userData) => {
+  const targetId = profileId || userData.id;
+
+  const profileUser = await dispatch(fetchUserById(targetId)).unwrap();
+
+  if (profileUser) {
+    setUser(profileUser);
+    setIsOwnProfile(!profileId || profileId === userData.id);
+    setFollowersCount(profileUser.followers?.length || 0);
+    setIsFollowing(profileUser.isFollowed || false);
+  } else {
+    setUser(null);
+  }
+};
 
   const handleFollowToggle = () => {
     setIsFollowing(!isFollowing);
